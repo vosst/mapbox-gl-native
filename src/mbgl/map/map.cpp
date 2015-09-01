@@ -9,7 +9,6 @@
 #include <mbgl/annotation/shape_annotation.hpp>
 
 #include <mbgl/util/projection.hpp>
-#include <mbgl/util/thread.hpp>
 #include <mbgl/util/math.hpp>
 
 namespace mbgl {
@@ -18,7 +17,7 @@ Map::Map(View& view_, FileSource& fileSource, MapMode mapMode, GLContextMode con
     : view(view_),
       transform(std::make_unique<Transform>(view, constrainMode)),
       data(std::make_unique<MapData>(mapMode, contextMode, view.getPixelRatio())),
-      context(std::make_unique<util::Thread<MapContext>>(util::ThreadContext{"Map", util::ThreadType::Map, util::ThreadPriority::Regular}, view, fileSource, *data))
+      context(std::make_unique<MapContext>(view, fileSource, *data))
 {
     view.initialize(this);
     update(Update::Dimensions);
@@ -26,7 +25,7 @@ Map::Map(View& view_, FileSource& fileSource, MapMode mapMode, GLContextMode con
 
 Map::~Map() {
     resume();
-    context->invoke(&MapContext::cleanup);
+    context->cleanup();
 }
 
 void Map::pause() {
@@ -34,7 +33,7 @@ void Map::pause() {
 
     std::unique_lock<std::mutex> lockPause(data->mutexPause);
     if (!data->paused) {
-        context->invoke(&MapContext::pause);
+        context->pause();
         data->condPause.wait(lockPause, [&]{ return data->paused; });
     }
 }
@@ -50,7 +49,7 @@ void Map::resume() {
 }
 
 void Map::renderStill(StillImageCallback callback) {
-    context->invoke(&MapContext::renderStill, transform->getState(),
+    context->renderStill(transform->getState(),
                     FrameData{ view.getFramebufferSize() }, callback);
 }
 
@@ -62,8 +61,7 @@ void Map::renderSync() {
     view.notifyMapChange(MapChangeWillStartRenderingFrame);
 
     const Update flags = transform->updateTransitions(Clock::now());
-    const bool fullyLoaded = context->invokeSync<bool>(
-            &MapContext::renderSync, transform->getState(), FrameData { view.getFramebufferSize() });
+    const bool fullyLoaded = context->renderSync(transform->getState(), FrameData { view.getFramebufferSize() });
 
     view.notifyMapChange(fullyLoaded ?
         MapChangeDidFinishRenderingFrameFullyRendered :
@@ -91,27 +89,27 @@ void Map::update(Update flags) {
     if (flags & Update::Dimensions) {
         transform->resize(view.getSize());
     }
-    context->invoke(&MapContext::triggerUpdate, transform->getState(), flags);
+    context->triggerUpdate(transform->getState(), flags);
 }
 
 #pragma mark - Style
 
 void Map::setStyleURL(const std::string &url) {
     view.notifyMapChange(MapChangeWillStartLoadingMap);
-    context->invoke(&MapContext::setStyleURL, url);
+    context->setStyleURL(url);
 }
 
 void Map::setStyleJSON(const std::string& json, const std::string& base) {
     view.notifyMapChange(MapChangeWillStartLoadingMap);
-    context->invoke(&MapContext::setStyleJSON, json, base);
+    context->setStyleJSON(json, base);
 }
 
 std::string Map::getStyleURL() const {
-    return context->invokeSync<std::string>(&MapContext::getStyleURL);
+    return context->getStyleURL();
 }
 
 std::string Map::getStyleJSON() const {
-    return context->invokeSync<std::string>(&MapContext::getStyleJSON);
+    return context->getStyleJSON();
 }
 
 #pragma mark - Transitions
@@ -366,7 +364,7 @@ LatLng Map::latLngForPixel(const PrecisionPoint& pixel) const {
 #pragma mark - Annotations
 
 double Map::getTopOffsetPixelsForAnnotationSymbol(const std::string& symbol) {
-    return context->invokeSync<double>(&MapContext::getTopOffsetPixelsForAnnotationSymbol, symbol);
+    return context->getTopOffsetPixelsForAnnotationSymbol(symbol);
 }
 
 AnnotationID Map::addPointAnnotation(const PointAnnotation& annotation) {
@@ -410,7 +408,7 @@ LatLngBounds Map::getBoundsForAnnotations(const AnnotationIDs& annotations) {
 #pragma mark - Sprites
 
 void Map::setSprite(const std::string& name, std::shared_ptr<const SpriteImage> sprite) {
-    context->invoke(&MapContext::setSprite, name, sprite);
+    context->setSprite(name, sprite);
 }
 
 void Map::removeSprite(const std::string& name) {
@@ -449,7 +447,7 @@ bool Map::getCollisionDebug() const {
 }
 
 bool Map::isFullyLoaded() const {
-    return context->invokeSync<bool>(&MapContext::isLoaded);
+    return context->isLoaded();
 }
 
 void Map::addClass(const std::string& klass) {
@@ -505,15 +503,15 @@ Duration Map::getDefaultTransitionDelay() const {
 }
 
 void Map::setSourceTileCacheSize(size_t size) {
-    context->invoke(&MapContext::setSourceTileCacheSize, size);
+    context->setSourceTileCacheSize(size);
 }
 
 void Map::onLowMemory() {
-    context->invoke(&MapContext::onLowMemory);
+    context->onLowMemory();
 }
 
 void Map::dumpDebugLogs() const {
-    context->invokeSync(&MapContext::dumpDebugLogs);
+    context->dumpDebugLogs();
 }
 
 }

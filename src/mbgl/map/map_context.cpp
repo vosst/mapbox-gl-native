@@ -30,7 +30,6 @@ MapContext::MapContext(View& view_, FileSource& fileSource, MapData& data_)
     : view(view_),
       data(data_),
       asyncUpdate([this] { update(); }),
-      asyncInvalidate([&view_] { view_.invalidate(); }),
       texturePool(std::make_unique<TexturePool>()) {
     assert(util::ThreadContext::currentlyOn(util::ThreadType::Map));
 
@@ -38,7 +37,6 @@ MapContext::MapContext(View& view_, FileSource& fileSource, MapData& data_)
     util::ThreadContext::setGLObjectStore(&glObjectStore);
 
     asyncUpdate.unref();
-    asyncInvalidate.unref();
 
     view.activate();
 }
@@ -75,8 +73,7 @@ void MapContext::pause() {
     data.condPause.wait(lockPause, [&]{ return !data.paused; });
 
     view.activate();
-
-    asyncInvalidate.send();
+    view.invalidate();
 }
 
 void MapContext::triggerUpdate(const TransformState& state, const Update flags) {
@@ -184,7 +181,7 @@ void MapContext::update() {
     style->update(transformState, *texturePool);
 
     if (data.mode == MapMode::Continuous) {
-        asyncInvalidate.send();
+        view.invalidate();
     } else if (callback && style->isLoaded()) {
         renderSync(transformState, frameData);
     }
@@ -284,7 +281,7 @@ void MapContext::setSourceTileCacheSize(size_t size) {
         for (const auto &source : style->sources) {
             source->setCacheSize(sourceCacheSize);
         }
-        asyncInvalidate.send();
+        view.invalidate();
     }
 }
 
@@ -294,7 +291,7 @@ void MapContext::onLowMemory() {
     for (const auto &source : style->sources) {
         source->onLowMemory();
     }
-    asyncInvalidate.send();
+    view.invalidate();
 }
 
 void MapContext::setSprite(const std::string& name, std::shared_ptr<const SpriteImage> sprite) {

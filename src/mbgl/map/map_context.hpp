@@ -75,7 +75,6 @@ private:
 
     Update updateFlags = Update::Nothing;
     util::AsyncTask asyncUpdate;
-    util::AsyncTask asyncInvalidate;
 
     std::unique_ptr<TexturePool> texturePool;
     std::unique_ptr<Painter> painter;
