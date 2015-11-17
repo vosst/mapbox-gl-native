@@ -129,7 +129,7 @@ void GLFWView::initialize(mbgl::Map *map_) {
             const bool dirty = !clean.test_and_set();
             if (dirty) {
                 const double started = glfwGetTime();
-                map->renderSync();
+                map->render();
                 report(1000 * (glfwGetTime() - started));
                 if (benchmark) {
                     map->update(mbgl::Update::Repaint);

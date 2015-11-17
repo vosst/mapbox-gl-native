@@ -24,28 +24,7 @@ Map::Map(View& view_, FileSource& fileSource, MapMode mapMode, GLContextMode con
 }
 
 Map::~Map() {
-    resume();
     context->cleanup();
-}
-
-void Map::pause() {
-    assert(data->mode == MapMode::Continuous);
-
-    std::unique_lock<std::mutex> lockPause(data->mutexPause);
-    if (!data->paused) {
-        context->pause();
-        data->condPause.wait(lockPause, [&]{ return data->paused; });
-    }
-}
-
-bool Map::isPaused() {
-    return data->paused;
-}
-
-void Map::resume() {
-    std::unique_lock<std::mutex> lockPause(data->mutexPause);
-    data->paused = false;
-    data->condPause.notify_all();
 }
 
 void Map::renderStill(StillImageCallback callback) {
@@ -53,7 +32,7 @@ void Map::renderStill(StillImageCallback callback) {
                     FrameData{ view.getFramebufferSize() }, callback);
 }
 
-void Map::renderSync() {
+void Map::render() {
     if (renderState == RenderState::never) {
         view.notifyMapChange(MapChangeWillStartRenderingMap);
     }

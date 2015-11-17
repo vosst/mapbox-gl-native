@@ -4,11 +4,8 @@
 #include <mbgl/util/chrono.hpp>
 
 #include <string>
-#include <mutex>
-#include <atomic>
 #include <vector>
 #include <cassert>
-#include <condition_variable>
 
 #include <mbgl/map/mode.hpp>
 #include <mbgl/annotation/annotation_manager.hpp>
@@ -17,8 +14,6 @@
 namespace mbgl {
 
 class MapData {
-    using Lock = std::lock_guard<std::mutex>;
-
 public:
     inline MapData(MapMode mode_, GLContextMode contextMode_, const float pixelRatio_)
         : mode(mode_)
@@ -118,10 +113,8 @@ public:
         defaultTransitionDelay = delay;
     }
 
-    util::exclusive<AnnotationManager> getAnnotationManager() {
-        return util::exclusive<AnnotationManager>(
-            &annotationManager,
-            std::make_unique<std::lock_guard<std::mutex>>(annotationManagerMutex));
+    AnnotationManager* getAnnotationManager() {
+        return &annotationManager;
     }
 
 public:
@@ -130,24 +123,18 @@ public:
     const float pixelRatio;
 
 private:
-    mutable std::mutex annotationManagerMutex;
     AnnotationManager annotationManager;
 
-    mutable std::mutex mtx;
-
     std::vector<std::string> classes;
-    std::atomic<uint8_t> debug { false };
-    std::atomic<uint8_t> collisionDebug { false };
-    std::atomic<Duration> animationTime;
-    std::atomic<Duration> defaultFadeDuration;
-    std::atomic<Duration> defaultTransitionDuration;
-    std::atomic<Duration> defaultTransitionDelay;
+    uint8_t debug { false };
+    uint8_t collisionDebug { false };
+    Duration animationTime;
+    Duration defaultFadeDuration;
+    Duration defaultTransitionDuration;
+    Duration defaultTransitionDelay;
 
 // TODO: make private
 public:
-    bool paused = false;
-    std::mutex mutexPause;
-    std::condition_variable condPause;
     bool loading = false;
 };
 

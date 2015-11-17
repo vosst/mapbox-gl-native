@@ -30,8 +30,6 @@ public:
     MapContext(View&, FileSource&, MapData&);
     ~MapContext();
 
-    void pause();
-
     void triggerUpdate(const TransformState&, Update = Update::Nothing);
     void renderStill(const TransformState&, const FrameData&, Map::StillImageCallback callback);
 
