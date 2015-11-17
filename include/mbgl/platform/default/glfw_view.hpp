@@ -3,6 +3,8 @@
 
 #include <mbgl/mbgl.hpp>
 
+#include <mbgl/util/timer.hpp>
+
 #ifdef MBGL_USE_GLES2
 #define GLFW_INCLUDE_ES2
 #endif
@@ -42,7 +44,6 @@ public:
 
     void setWindowTitle(const std::string&);
 
-    void run();
     void report(float duration);
 
 private:
@@ -86,6 +87,8 @@ private:
 
     GLFWwindow *window = nullptr;
     std::atomic_flag clean = ATOMIC_FLAG_INIT;
+
+    mbgl::util::Timer timer;
 };
 
 #endif

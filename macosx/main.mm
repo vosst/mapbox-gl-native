@@ -9,6 +9,7 @@
 
 #include <mbgl/util/geo.hpp>
 #include <mbgl/util/default_styles.hpp>
+#include <mbgl/util/run_loop.hpp>
 
 #import <Foundation/Foundation.h>
 
@@ -139,6 +140,7 @@ int main(int argc, char* argv[]) {
         mbgl::Log::Info(mbgl::Event::General, "BENCHMARK MODE: Some optimizations are disabled.");
     }
 
+    mbgl::util::RunLoop loop;
     GLFWView view(fullscreen, benchmark);
 
     mbgl::SQLiteCache cache(defaultCacheDatabase());
@@ -194,7 +196,7 @@ int main(int argc, char* argv[]) {
 
     map.setStyleURL(style);
 
-    view.run();
+    loop.run();
 
     [reachability stopNotifier];
 

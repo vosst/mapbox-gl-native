@@ -5,6 +5,7 @@
 #include <mbgl/platform/gl.hpp>
 #include <mbgl/platform/log.hpp>
 #include <mbgl/util/gl_helper.hpp>
+#include <mbgl/util/run_loop.hpp>
 #include <mbgl/util/string.hpp>
 
 #include <cassert>
@@ -83,6 +84,8 @@ GLFWView::GLFWView(bool fullscreen_, bool benchmark_)
 
     glfwMakeContextCurrent(nullptr);
 
+    timer.unref();
+
     printf("\n");
     printf("================================================================================\n");
     printf("\n");
@@ -116,6 +119,24 @@ GLFWView::~GLFWView() {
 
 void GLFWView::initialize(mbgl::Map *map_) {
     View::initialize(map_);
+
+    timer.start(mbgl::Duration::zero(), std::chrono::milliseconds(1000 / 60), [&] {
+        glfwPollEvents();
+
+        if (glfwWindowShouldClose(window)) {
+            mbgl::util::RunLoop::Get()->stop();
+        } else {
+            const bool dirty = !clean.test_and_set();
+            if (dirty) {
+                const double started = glfwGetTime();
+                map->renderSync();
+                report(1000 * (glfwGetTime() - started));
+                if (benchmark) {
+                    map->update(mbgl::Update::Repaint);
+                }
+            }
+        }
+    });
 }
 
 void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, int mods) {
@@ -374,21 +395,6 @@ void GLFWView::onMouseMove(GLFWwindow *window, double x, double y) {
     view->lastY = y;
 }
 
-void GLFWView::run() {
-    while (!glfwWindowShouldClose(window)) {
-        glfwWaitEvents();
-        const bool dirty = !clean.test_and_set();
-        if (dirty) {
-            const double started = glfwGetTime();
-            map->renderSync();
-            report(1000 * (glfwGetTime() - started));
-            if (benchmark) {
-                map->update(mbgl::Update::Repaint);
-            }
-        }
-    }
-}
-
 float GLFWView::getPixelRatio() const {
     return pixelRatio;
 }
@@ -410,12 +416,10 @@ void GLFWView::deactivate() {
 }
 
 void GLFWView::notify() {
-    glfwPostEmptyEvent();
 }
 
 void GLFWView::invalidate() {
     clean.clear();
-    glfwPostEmptyEvent();
 }
 
 void GLFWView::beforeRender() {
@@ -447,7 +451,6 @@ void GLFWView::setChangeStyleCallback(std::function<void()> callback) {
 
 void GLFWView::setShouldClose() {
     glfwSetWindowShouldClose(window, true);
-    glfwPostEmptyEvent();
 }
 
 void GLFWView::setWindowTitle(const std::string& title) {

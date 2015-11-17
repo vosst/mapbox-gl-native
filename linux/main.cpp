@@ -1,5 +1,6 @@
 #include <mbgl/mbgl.hpp>
 #include <mbgl/util/default_styles.hpp>
+#include <mbgl/util/run_loop.hpp>
 #include <mbgl/platform/log.hpp>
 #include <mbgl/platform/platform.hpp>
 #include <mbgl/platform/default/settings_json.hpp>
@@ -104,6 +105,7 @@ int main(int argc, char *argv[]) {
         mbgl::Log::Info(mbgl::Event::General, "BENCHMARK MODE: Some optimizations are disabled.");
     }
 
+    mbgl::util::RunLoop loop;
     view = std::make_unique<GLFWView>(fullscreen, benchmark);
 
     mbgl::SQLiteCache cache("/tmp/mbgl-cache.db");
@@ -157,7 +159,7 @@ int main(int argc, char *argv[]) {
 
     map.setStyleURL(style);
 
-    view->run();
+    loop.run();
 
     // Save settings
     mbgl::LatLng latLng = map.getLatLng();
