@@ -7,6 +7,7 @@
 #include <mbgl/platform/default/headless_view.hpp>
 #include <mbgl/storage/default_file_source.hpp>
 #include <mbgl/util/exception.hpp>
+#include <mbgl/util/run_loop.hpp>
 
 #include <future>
 
@@ -15,6 +16,8 @@ using namespace mbgl;
 TEST(API, RenderWithoutCallback) {
     FixtureLogObserver* log = new FixtureLogObserver();
     Log::setObserver(std::unique_ptr<Log::Observer>(log));
+
+    util::RunLoop loop;
 
     auto display = std::make_shared<mbgl::HeadlessDisplay>();
     HeadlessView view(display, 1);
@@ -38,6 +41,8 @@ TEST(API, RenderWithoutCallback) {
 }
 
 TEST(API, RenderWithoutStyle) {
+    util::RunLoop loop;
+
     auto display = std::make_shared<mbgl::HeadlessDisplay>();
     HeadlessView view(display, 1);
     view.resize(128, 512);
@@ -45,13 +50,16 @@ TEST(API, RenderWithoutStyle) {
 
     Map map(view, fileSource, MapMode::Still);
 
-    std::promise<std::exception_ptr> promise;
-    map.renderStill([&promise](std::exception_ptr error, std::unique_ptr<const StillImage>) {
-        promise.set_value(error);
+    std::exception_ptr error;
+    map.renderStill([&](std::exception_ptr error_, std::unique_ptr<const StillImage>) {
+        error = error_;
+        loop.stop();
     });
 
+    loop.run();
+
     try {
-        std::rethrow_exception(promise.get_future().get());
+        std::rethrow_exception(error);
     } catch (const util::MisuseException& ex) {
         EXPECT_EQ(std::string(ex.what()), "Map doesn't have a style");
     } catch (const std::exception&) {

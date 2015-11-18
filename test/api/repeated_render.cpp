@@ -8,11 +8,14 @@
 #include <mbgl/storage/default_file_source.hpp>
 #include <mbgl/util/image.hpp>
 #include <mbgl/util/io.hpp>
+#include <mbgl/util/run_loop.hpp>
 
 #include <future>
 
 TEST(API, RepeatedRender) {
     using namespace mbgl;
+
+    util::RunLoop loop;
 
     const auto style = util::read_file("test/fixtures/api/water.json");
 
@@ -26,11 +29,15 @@ TEST(API, RepeatedRender) {
 
     {
         map.setStyleJSON(style, "");
-        std::promise<std::unique_ptr<const StillImage>> promise;
-        map.renderStill([&promise](std::exception_ptr, std::unique_ptr<const StillImage> image) {
-            promise.set_value(std::move(image));
+        std::unique_ptr<const StillImage> result;
+        map.renderStill([&result](std::exception_ptr, std::unique_ptr<const StillImage> image) {
+            result = std::move(image);
         });
-        auto result = promise.get_future().get();
+
+        while (!result) {
+            loop.runOnce();
+        }
+
         ASSERT_EQ(256, result->width);
         ASSERT_EQ(512, result->height);
         const std::string png = util::compress_png(result->width, result->height, result->pixels.get());
@@ -39,11 +46,15 @@ TEST(API, RepeatedRender) {
 
     {
         map.setStyleJSON(style, "TEST_DATA/suite");
-        std::promise<std::unique_ptr<const StillImage>> promise;
-        map.renderStill([&promise](std::exception_ptr, std::unique_ptr<const StillImage> image) {
-            promise.set_value(std::move(image));
+        std::unique_ptr<const StillImage> result;
+        map.renderStill([&result](std::exception_ptr, std::unique_ptr<const StillImage> image) {
+            result = std::move(image);
         });
-        auto result = promise.get_future().get();
+
+        while (!result) {
+            loop.runOnce();
+        }
+
         ASSERT_EQ(256, result->width);
         ASSERT_EQ(512, result->height);
         const std::string png = util::compress_png(result->width, result->height, result->pixels.get());

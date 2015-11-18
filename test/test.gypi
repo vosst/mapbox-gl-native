@@ -52,7 +52,6 @@
         'miscellaneous/enums.cpp',
         'miscellaneous/functions.cpp',
         'miscellaneous/geo.cpp',
-        'miscellaneous/map.cpp',
         'miscellaneous/map_context.cpp',
         'miscellaneous/mapbox.cpp',
         'miscellaneous/merge_lines.cpp',
