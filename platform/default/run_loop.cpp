@@ -5,10 +5,10 @@
 namespace mbgl {
 namespace util {
 
-static uv::tls<RunLoop> current;
+static __thread RunLoop *current;
 
 RunLoop* RunLoop::Get() {
-    return current.get();
+    return current;
 }
 
 class RunLoop::Impl {
@@ -40,12 +40,12 @@ RunLoop::RunLoop(Type type) : impl(std::make_unique<Impl>()) {
 
     impl->type = type;
 
-    current.set(this);
+    current = this;
     impl->async = std::make_unique<AsyncTask>(std::bind(&RunLoop::process, this));
 }
 
 RunLoop::~RunLoop() {
-    current.set(nullptr);
+    current = nullptr;
 
     if (impl->type == Type::Default) {
         return;
@@ -69,7 +69,7 @@ RunLoop::~RunLoop() {
 }
 
 LOOP_HANDLE RunLoop::getLoopHandle() {
-    return current.get()->impl->loop;
+    return current->impl->loop;
 }
 
 void RunLoop::push(std::shared_ptr<WorkTask> task) {

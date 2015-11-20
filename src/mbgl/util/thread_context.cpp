@@ -6,11 +6,11 @@ namespace util {
 class MainThreadContextRegistrar {
 public:
     MainThreadContextRegistrar() : context("Main", ThreadType::Main, ThreadPriority::Regular) {
-        ThreadContext::current.set(&context);
+        ThreadContext::current = &context;
     }
 
     ~MainThreadContextRegistrar() {
-        ThreadContext::current.set(nullptr);
+        ThreadContext::current = nullptr;
     }
 
 private:
@@ -23,7 +23,7 @@ ThreadContext::ThreadContext(const std::string& name_, ThreadType type_, ThreadP
       priority(priority_) {
 }
 
-uv::tls<ThreadContext> ThreadContext::current;
+__thread ThreadContext *ThreadContext::current;
 
 // Will auto register the main thread context
 // at startup. Must be instantiated after the
