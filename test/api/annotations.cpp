@@ -11,19 +11,47 @@
 #include <mbgl/util/image.hpp>
 #include <mbgl/util/io.hpp>
 
+#include <mapbox/pixelmatch.hpp>
+
 #include <future>
 #include <vector>
 
 using namespace mbgl;
 
-std::string renderPNG(Map& map) {
+std::unique_ptr<const StillImage> render(Map& map) {
     std::promise<std::unique_ptr<const StillImage>> promise;
     map.renderStill([&](std::exception_ptr, std::unique_ptr<const StillImage> image) {
         promise.set_value(std::move(image));
     });
+    return promise.get_future().get();
+}
 
-    auto result = promise.get_future().get();
-    return util::compress_png(result->width, result->height, result->pixels.get());
+void checkRendering(Map& map, const char * name) {
+    std::string base = std::string("test/fixtures/annotations/") + name + "/";
+
+    std::unique_ptr<const StillImage> actual = render(map);
+
+    if (getenv("UPDATE")) {
+        util::write_file(base + "expected.png", util::compress_png(actual->width, actual->height, actual->pixels.get()));
+        return;
+    }
+
+    util::Image expected(util::read_file(base + "expected.png"));
+
+    ASSERT_EQ(expected.getWidth(), actual->width);
+    ASSERT_EQ(expected.getHeight(), actual->height);
+
+    std::vector<uint8_t> diff(actual->width * actual->height * 4);
+    double pixels = mapbox::pixelmatch(reinterpret_cast<const uint8_t*>(actual->pixels.get()),
+                                       reinterpret_cast<const uint8_t*>(expected.getData()),
+                                       actual->width,
+                                       actual->height,
+                                       diff.data());
+
+    EXPECT_LT(pixels / (actual->width * actual->height), 0.0002);
+
+    util::write_file(base + "actual.png", util::compress_png(actual->width, actual->height, actual->pixels.get()));
+    util::write_file(base + "diff.png", util::compress_png(actual->width, actual->height, diff.data()));
 }
 
 TEST(Annotations, PointAnnotation) {
@@ -33,9 +61,9 @@ TEST(Annotations, PointAnnotation) {
 
     Map map(view, fileSource, MapMode::Still);
     map.setStyleJSON(util::read_file("test/fixtures/api/empty.json"), "");
-    map.addPointAnnotation(PointAnnotation({ 0, 0 }, "default_marker"));
+    map.addPointAnnotation(PointAnnotation({ 0, -20 }, "default_marker"));
 
-    util::write_file("test/output/point_annotation.png", renderPNG(map));
+    checkRendering(map, "point_annotation");
 }
 
 TEST(Annotations, LineAnnotation) {
@@ -54,7 +82,7 @@ TEST(Annotations, LineAnnotation) {
 
     map.addShapeAnnotation(ShapeAnnotation(segments, properties));
 
-    util::write_file("test/output/line_annotation.png", renderPNG(map));
+    checkRendering(map, "line_annotation");
 }
 
 TEST(Annotations, FillAnnotation) {
@@ -72,7 +100,7 @@ TEST(Annotations, FillAnnotation) {
 
     map.addShapeAnnotation(ShapeAnnotation(segments, properties));
 
-    util::write_file("test/output/fill_annotation.png", renderPNG(map));
+    checkRendering(map, "fill_annotation");
 }
 
 TEST(Annotations, StyleSourcedShapeAnnotation) {
@@ -87,7 +115,7 @@ TEST(Annotations, StyleSourcedShapeAnnotation) {
 
     map.addShapeAnnotation(ShapeAnnotation(segments, "annotation"));
 
-    util::write_file("test/output/style_sourced_shape_annotation.png", renderPNG(map));
+    checkRendering(map, "style_sourced_shape_annotation");
 }
 
 TEST(Annotations, AddMultiple) {
@@ -99,11 +127,11 @@ TEST(Annotations, AddMultiple) {
     map.setStyleJSON(util::read_file("test/fixtures/api/empty.json"), "");
     map.addPointAnnotation(PointAnnotation({ 0, -20 }, "default_marker"));
 
-    renderPNG(map);
+    render(map);
 
     map.addPointAnnotation(PointAnnotation({ 0, 20 }, "default_marker"));
 
-    util::write_file("test/output/add_multiple.png", renderPNG(map));
+    checkRendering(map, "add_multiple");
 }
 
 TEST(Annotations, NonImmediateAdd) {
@@ -114,7 +142,7 @@ TEST(Annotations, NonImmediateAdd) {
     Map map(view, fileSource, MapMode::Still);
     map.setStyleJSON(util::read_file("test/fixtures/api/empty.json"), "");
 
-    renderPNG(map);
+    render(map);
 
     AnnotationSegments segments = {{ {{ { 0, 0 }, { 0, 45 }, { 45, 45 }, { 45, 0 } }} }};
 
@@ -123,7 +151,7 @@ TEST(Annotations, NonImmediateAdd) {
 
     map.addShapeAnnotation(ShapeAnnotation(segments, properties));
 
-    util::write_file("test/output/non_immediate_add.png", renderPNG(map));
+    checkRendering(map, "non_immediate_add");
 }
 
 TEST(Annotations, RemovePoint) {
@@ -135,11 +163,11 @@ TEST(Annotations, RemovePoint) {
     map.setStyleJSON(util::read_file("test/fixtures/api/empty.json"), "");
     uint32_t point = map.addPointAnnotation(PointAnnotation({ 0, 0 }, "default_marker"));
 
-    renderPNG(map);
+    render(map);
 
     map.removeAnnotation(point);
 
-    util::write_file("test/output/remove_point.png", renderPNG(map));
+    checkRendering(map, "remove_point");
 }
 
 TEST(Annotations, RemoveShape) {
@@ -157,11 +185,11 @@ TEST(Annotations, RemoveShape) {
     map.setStyleJSON(util::read_file("test/fixtures/api/empty.json"), "");
     uint32_t shape = map.addShapeAnnotation(ShapeAnnotation(segments, properties));
 
-    renderPNG(map);
+    render(map);
 
     map.removeAnnotation(shape);
 
-    util::write_file("test/output/remove_shape.png", renderPNG(map));
+    checkRendering(map, "remove_shape");
 }
 
 TEST(Annotations, ImmediateRemoveShape) {
@@ -173,7 +201,7 @@ TEST(Annotations, ImmediateRemoveShape) {
     map.removeAnnotation(map.addShapeAnnotation(ShapeAnnotation({}, {})));
     map.setStyleJSON(util::read_file("test/fixtures/api/empty.json"), "");
 
-    renderPNG(map);
+    render(map);
 }
 
 TEST(Annotations, SwitchStyle) {
@@ -183,13 +211,13 @@ TEST(Annotations, SwitchStyle) {
 
     Map map(view, fileSource, MapMode::Still);
     map.setStyleJSON(util::read_file("test/fixtures/api/empty.json"), "");
-    map.addPointAnnotation(PointAnnotation({ 0, 0 }, "default_marker"));
+    map.addPointAnnotation(PointAnnotation({ 0, -20 }, "default_marker"));
 
-    renderPNG(map);
+    render(map);
 
     map.setStyleJSON(util::read_file("test/fixtures/api/empty.json"), "");
 
-    util::write_file("test/output/switch_style.png", renderPNG(map));
+    checkRendering(map, "switch_style");
 }
 
 TEST(Annotations, CustomIcon) {
@@ -202,5 +230,5 @@ TEST(Annotations, CustomIcon) {
     map.setSprite("cafe", std::make_shared<SpriteImage>(12, 12, 1, std::string(12 * 12 * 4, '\xFF')));
     map.addPointAnnotation(PointAnnotation({ 0, 0 }, "cafe"));
 
-    util::write_file("test/output/custom_icon.png", renderPNG(map));
+    checkRendering(map, "custom_icon");
 }
