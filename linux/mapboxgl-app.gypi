@@ -29,16 +29,13 @@
           '<@(opengl_cflags)',
           '<@(boost_cflags)',
           '<@(glfw_cflags)',
-          '<@(libuv_cflags)',
           '<@(variant_cflags)',
         ],
         'ldflags': [
           '<@(glfw_ldflags)',
-          '<@(libuv_ldflags)',
         ],
         'libraries': [
           '<@(glfw_static_libs)',
-          '<@(libuv_static_libs)',
         ],
       },
 

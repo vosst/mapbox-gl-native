@@ -31,7 +31,6 @@
 
       'variables' : {
         'cflags_cc': [
-          '<@(libuv_cflags)',
           '<@(boost_cflags)',
           '<@(glfw_cflags)',
           '<@(variant_cflags)',
@@ -41,7 +40,6 @@
           '<@(glfw_ldflags)',
         ],
         'libraries': [
-          '<@(libuv_static_libs)',
           '<@(glfw_static_libs)',
           '<@(boost_libprogram_options_static_libs)'
         ],
