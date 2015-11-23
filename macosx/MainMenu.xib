@@ -14,6 +14,7 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customObject id="Voe-Tx-rLC" customClass="AppDelegate">
             <connections>
+                <outlet property="preferencesWindow" destination="UWc-yQ-qda" id="Ota-aT-Mz2"/>
                 <outlet property="window" destination="QvC-M9-y7g" id="gIp-Ho-8D9"/>
             </connections>
         </customObject>
@@ -30,7 +31,11 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="VOq-y0-SEH"/>
-                            <menuItem title="Preferences…" keyEquivalent="," id="BOF-NM-1cW"/>
+                            <menuItem title="Preferences…" keyEquivalent="," id="BOF-NM-1cW">
+                                <connections>
+                                    <action selector="showPreferences:" target="-1" id="Llx-Uy-HTS"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="wFC-TO-SCJ"/>
                             <menuItem title="Services" id="NMo-om-nkz">
                                 <modifierMask key="keyEquivalentModifierMask"/>
@@ -393,10 +398,16 @@
                             </menuItem>
                             <menuItem title="Snap to North" keyEquivalent="" id="Zss-3w-wkz">
                                 <connections>
-                                    <action selector="snapToNorth:" target="Voe-Tx-rLC" id="tDZ-9a-mdP"/>
+                                    <action selector="snapToNorth:" target="-1" id="Ayq-GE-Lb5"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="mkP-YN-G0w"/>
+                            <menuItem title="Reload" keyEquivalent="r" id="JvI-nv-KaE">
+                                <connections>
+                                    <action selector="reload:" target="-1" id="xkh-9F-mOe"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="bdp-ag-p0V"/>
                             <menuItem title="Show Tile Edges" id="rDE-dG-rTR">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
@@ -481,5 +492,67 @@
                 <autoresizingMask key="autoresizingMask"/>
             </view>
         </window>
+        <window title="Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="Preferences" animationBehavior="default" id="UWc-yQ-qda">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="109" y="131" width="350" height="62"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="777"/>
+            <view key="contentView" id="eA4-n3-qPe">
+                <rect key="frame" x="0.0" y="0.0" width="350" height="62"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0IK-AW-Gg3">
+                        <rect key="frame" x="18" y="23" width="89" height="17"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Access token:" id="Ptd-FI-M5A">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                        <connections>
+                            <accessibilityConnection property="link" destination="7sb-sf-oJU" id="U0t-jC-oQ7"/>
+                        </connections>
+                    </textField>
+                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="7sb-sf-oJU">
+                        <rect key="frame" x="113" y="20" width="197" height="22"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="jlV-TC-NUv">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                        <connections>
+                            <binding destination="45S-yT-WUN" name="value" keyPath="values.MGLMapboxAccessToken" id="iJE-S2-ALY"/>
+                        </connections>
+                    </textField>
+                    <button translatesAutoresizingMaskIntoConstraints="NO" id="c3S-LC-PoX">
+                        <rect key="frame" x="318" y="25" width="12" height="12"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="12" id="M3J-pU-gKn"/>
+                        </constraints>
+                        <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSFollowLinkFreestandingTemplate" imagePosition="only" alignment="center" controlSize="small" imageScaling="proportionallyUpOrDown" inset="2" id="38x-37-Ay0">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="smallSystem"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="openAccessTokenManager:" target="-1" id="1LX-4G-roC"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <constraints>
+                    <constraint firstAttribute="trailing" secondItem="c3S-LC-PoX" secondAttribute="trailing" constant="20" symbolic="YES" id="7QU-Jd-Rg6"/>
+                    <constraint firstItem="c3S-LC-PoX" firstAttribute="top" secondItem="eA4-n3-qPe" secondAttribute="top" constant="25" id="JOS-HU-27c"/>
+                    <constraint firstItem="7sb-sf-oJU" firstAttribute="leading" secondItem="0IK-AW-Gg3" secondAttribute="trailing" constant="8" symbolic="YES" id="SS6-VQ-sLK"/>
+                    <constraint firstItem="0IK-AW-Gg3" firstAttribute="leading" secondItem="eA4-n3-qPe" secondAttribute="leading" constant="20" symbolic="YES" id="TYG-io-qfV"/>
+                    <constraint firstItem="7sb-sf-oJU" firstAttribute="top" secondItem="eA4-n3-qPe" secondAttribute="top" constant="20" symbolic="YES" id="Vzb-q8-ecP"/>
+                    <constraint firstItem="c3S-LC-PoX" firstAttribute="leading" secondItem="7sb-sf-oJU" secondAttribute="trailing" constant="8" symbolic="YES" id="pjl-9u-IgM"/>
+                    <constraint firstItem="7sb-sf-oJU" firstAttribute="baseline" secondItem="0IK-AW-Gg3" secondAttribute="baseline" id="qIY-Jr-9Ws"/>
+                    <constraint firstItem="7sb-sf-oJU" firstAttribute="centerY" secondItem="c3S-LC-PoX" secondAttribute="centerY" id="zej-gw-fC0"/>
+                </constraints>
+            </view>
+            <point key="canvasLocation" x="754" y="210"/>
+        </window>
+        <userDefaultsController representsSharedInstance="YES" id="45S-yT-WUN"/>
     </objects>
+    <resources>
+        <image name="NSFollowLinkFreestandingTemplate" width="14" height="14"/>
+    </resources>
 </document>

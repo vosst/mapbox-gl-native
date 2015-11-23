@@ -89,6 +89,10 @@ CLLocationCoordinate2D MGLLocationCoordinate2DFromLatLng(mbgl::LatLng latLng) {
     return self;
 }
 
++ (NS_ARRAY_OF(NSString *) *)restorableStateKeyPaths {
+    return @[@"zoomLevel", @"direction"];
+}
+
 - (void)commonInit {
     _glView = [[MGLOpenGLView alloc] initWithFrame:self.bounds mapView:self];
     _glView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;

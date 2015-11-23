@@ -17,6 +17,8 @@
 @property (weak) IBOutlet NSWindow *window;
 @property (strong) IBOutlet MGLMapView *mapView;
 
+@property (weak) IBOutlet NSWindow *preferencesWindow;
+
 @end
 
 @implementation AppDelegate
@@ -28,21 +30,19 @@
         if (accessToken) {
             // Store to preferences so that we can launch the app later on without having to specify
             // token.
-            [[NSUserDefaults standardUserDefaults] setObject:accessToken forKey:@"access_token"];
+            [[NSUserDefaults standardUserDefaults] setObject:accessToken forKey:@"MGLMapboxAccessToken"];
         } else {
             // Try to retrieve from preferences, maybe we've stored them there previously and can reuse
             // the token.
-            accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:@"access_token"];
+            accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:@"MGLMapboxAccessToken"];
         }
         if (!accessToken) {
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Access token required";
-            alert.informativeText = @"To load Mapbox-hosted tiles and styles, set the MAPBOX_ACCESS_TOKEN environment variable.";
-            [alert addButtonWithTitle:@"OK"];
-            [alert addButtonWithTitle:@"Open Studio"];
-            if ([alert runModal] == NSAlertSecondButtonReturn) {
-                [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://www.mapbox.com/studio/account/tokens/"]];
-            }
+            alert.informativeText = @"To load Mapbox-hosted tiles and styles, enter your Mapbox access token in Preferences.";
+            [alert addButtonWithTitle:@"Open Preferences"];
+            [alert runModal];
+            [self showPreferences:nil];
         }
         
         [MGLAccountManager setAccessToken:accessToken];
@@ -98,6 +98,16 @@
     [self.mapView setDirection:0 animated:YES];
 }
 
+- (IBAction)reload:(id)sender {
+    NSURL *styleURL = self.mapView.styleURL;
+    if ([styleURL isEqual:[MGLStyle streetsStyleURL]]) {
+        self.mapView.styleURL = [MGLStyle satelliteStyleURL];
+    } else {
+        self.mapView.styleURL = nil;
+    }
+    self.mapView.styleURL = styleURL;
+}
+
 - (IBAction)toggleTileEdges:(id)sender {
     self.mapView.showsTileEdges = !self.mapView.showsTileEdges;
 }
@@ -123,6 +133,14 @@
     NSURL *feedbackURL = [NSURL URLWithString:[NSString stringWithFormat:@"https://www.mapbox.com/map-feedback/#/%.5f/%.5f/%.0f",
                                                centerCoordinate.longitude, centerCoordinate.latitude, round(self.mapView.zoomLevel)]];
     [[NSWorkspace sharedWorkspace] openURL:feedbackURL];
+}
+
+- (IBAction)showPreferences:(id)sender {
+    [self.preferencesWindow makeKeyAndOrderFront:sender];
+}
+
+- (IBAction)openAccessTokenManager:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://www.mapbox.com/studio/account/tokens/"]];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
@@ -163,6 +181,9 @@
     if (menuItem.action == @selector(snapToNorth:)) {
         return self.mapView.direction != 0;
     }
+    if (menuItem.action == @selector(reload:)) {
+        return YES;
+    }
     if (menuItem.action == @selector(toggleTileEdges:)) {
         menuItem.title = self.mapView.showsTileEdges ? @"Hide Tile Edges" : @"Show Tile Edges";
         return YES;
@@ -175,6 +196,9 @@
         return YES;
     }
     if (menuItem.action == @selector(giveFeedback:)) {
+        return YES;
+    }
+    if (menuItem.action == @selector(showPreferences:)) {
         return YES;
     }
     return NO;
