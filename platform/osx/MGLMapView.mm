@@ -464,16 +464,23 @@ CLLocationCoordinate2D MGLLocationCoordinate2DFromLatLng(mbgl::LatLng latLng) {
 
 - (void)scrollWheel:(NSEvent *)event {
     // https://developer.apple.com/library/mac/releasenotes/AppKit/RN-AppKitOlderNotes/#10_7Dragging
-    if (!self.scrollEnabled || event.phase == NSEventPhaseNone
+    if (!self.scrollEnabled
+        || (event.phase == NSEventPhaseNone && event.momentumPhase == NSEventPhaseNone)
         || _magnificationGestureRecognizer.state != NSGestureRecognizerStatePossible
         || _rotationGestureRecognizer.state != NSGestureRecognizerStatePossible) {
         return;
     }
     
+    _mbglMap->cancelTransitions();
+    
     CGFloat x = event.scrollingDeltaX;
     CGFloat y = event.scrollingDeltaY;
     if (x || y) {
         [self offsetCenterCoordinateBy:NSMakePoint(x, y) animated:NO];
+    }
+    
+    if (event.momentumPhase != NSEventPhaseNone) {
+        [self offsetCenterCoordinateBy:NSMakePoint(x, y) animated:YES];
     }
 }
 
