@@ -16,103 +16,122 @@ std::string encodePNG(const UnassociatedImage& src) {
         return "";
     }
 
-    CGColorSpaceRef color_space = CGColorSpaceCreateDeviceRGB();
-    if (!color_space) {
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    if (!colorSpace) {
         CGDataProviderRelease(provider);
-        return "";
+        throw std::runtime_error("CGColorSpaceCreateDeviceRGB failed");
     }
 
-    CGImageRef image = CGImageCreate(src.width, src.height, 8, 32, 4 * src.width, color_space,
-        kCGBitmapByteOrderDefault | kCGImageAlphaLast, provider, NULL, false,
-        kCGRenderingIntentDefault);
+    CGImageRef image = CGImageCreate(src.width,
+                                     src.height,
+                                     8, 32,
+                                     4 * src.width,
+                                     colorSpace,
+                                     kCGBitmapByteOrderDefault | kCGImageAlphaLast,
+                                     provider,
+                                     NULL, false,
+                                     kCGRenderingIntentDefault);
     if (!image) {
-        CGColorSpaceRelease(color_space);
+        CGColorSpaceRelease(colorSpace);
         CGDataProviderRelease(provider);
-        return "";
+        throw std::runtime_error("CGImageCreate failed");
     }
 
     CFMutableDataRef data = CFDataCreateMutable(kCFAllocatorDefault, 0);
     if (!data) {
         CGImageRelease(image);
-        CGColorSpaceRelease(color_space);
+        CGColorSpaceRelease(colorSpace);
         CGDataProviderRelease(provider);
-        return "";
+        throw std::runtime_error("CFDataCreateMutable failed");
     }
 
-    CGImageDestinationRef image_destination = CGImageDestinationCreateWithData(data, kUTTypePNG, 1, NULL);
-    if (!image_destination) {
+    CGImageDestinationRef imageDestination = CGImageDestinationCreateWithData(data, kUTTypePNG, 1, NULL);
+    if (!imageDestination) {
         CFRelease(data);
         CGImageRelease(image);
-        CGColorSpaceRelease(color_space);
+        CGColorSpaceRelease(colorSpace);
         CGDataProviderRelease(provider);
-        return "";
+        throw std::runtime_error("CGImageDestinationCreateWithData failed");
     }
 
-    CGImageDestinationAddImage(image_destination, image, NULL);
-    CGImageDestinationFinalize(image_destination);
+    CGImageDestinationAddImage(imageDestination, image, NULL);
+    CGImageDestinationFinalize(imageDestination);
 
     const std::string result {
         reinterpret_cast<const char *>(CFDataGetBytePtr(data)),
         static_cast<size_t>(CFDataGetLength(data))
     };
 
-    CFRelease(image_destination);
+    CFRelease(imageDestination);
     CFRelease(data);
     CGImageRelease(image);
-    CGColorSpaceRelease(color_space);
+    CGColorSpaceRelease(colorSpace);
     CGDataProviderRelease(provider);
 
     return result;
 }
 
-PremultipliedImage decodeImage(const std::string &source_data) {
-    CFDataRef data = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault, reinterpret_cast<const unsigned char *>(source_data.data()), source_data.size(), kCFAllocatorNull);
+UnassociatedImage decodeImage(const std::string& sourceData) {
+    CFDataRef data = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault,
+                                                 reinterpret_cast<const unsigned char *>(sourceData.data()),
+                                                 sourceData.size(),
+                                                 kCFAllocatorNull);
     if (!data) {
         throw std::runtime_error("CFDataCreateWithBytesNoCopy failed");
     }
 
-    CGImageSourceRef image_source = CGImageSourceCreateWithData(data, NULL);
-    if (!image_source) {
+    CGImageSourceRef imageSource = CGImageSourceCreateWithData(data, NULL);
+    if (!imageSource) {
         CFRelease(data);
         throw std::runtime_error("CGImageSourceCreateWithData failed");
     }
 
-    CGImageRef image = CGImageSourceCreateImageAtIndex(image_source, 0, NULL);
+    CGImageRef image = CGImageSourceCreateImageAtIndex(imageSource, 0, NULL);
     if (!image) {
-        CFRelease(image_source);
+        CFRelease(imageSource);
         CFRelease(data);
         throw std::runtime_error("CGImageSourceCreateImageAtIndex failed");
     }
 
-    CGColorSpaceRef color_space = CGColorSpaceCreateDeviceRGB();
-    if (!color_space) {
+    CFDataRef dataCopy = CGDataProviderCopyData(CGImageGetDataProvider(image));
+
+    size_t width = CGImageGetWidth(image);
+    size_t height = CGImageGetHeight(image);
+    CGBitmapInfo info = CGImageGetBitmapInfo(image);
+    size_t bpc = CGImageGetBitsPerComponent(image);
+    size_t bpp = CGImageGetBitsPerPixel(image);
+    CGImageAlphaInfo alpha = CGImageAlphaInfo(info & kCGBitmapAlphaInfoMask);
+
+    if (bpc != 8 ||
+        (info & kCGBitmapFloatComponents) ||
+        (info & kCGBitmapByteOrderMask) != kCGBitmapByteOrderDefault ||
+        !((bpp == 32 && (alpha == kCGImageAlphaLast || alpha == kCGImageAlphaNoneSkipLast)) ||
+          (bpp == 24 && alpha == kCGImageAlphaNone))) {
+        CFRelease(dataCopy);
         CGImageRelease(image);
-        CFRelease(image_source);
+        CFRelease(imageSource);
         CFRelease(data);
-        throw std::runtime_error("CGColorSpaceCreateDeviceRGB failed");
+        throw std::runtime_error("unsupported image format");
     }
 
-    PremultipliedImage result { CGImageGetWidth(image), CGImageGetHeight(image) };
+    UnassociatedImage result { width, height };
 
-    CGContextRef context = CGBitmapContextCreate(result.data.get(), result.width, result.height, 8, result.stride(),
-        color_space, kCGImageAlphaPremultipliedLast);
-    if (!context) {
-        CGColorSpaceRelease(color_space);
-        CGImageRelease(image);
-        CFRelease(image_source);
-        CFRelease(data);
-        throw std::runtime_error("CGBitmapContextCreate failed");
+    const uint8_t* src = CFDataGetBytePtr(dataCopy);
+    const uint8_t* end = src + CFDataGetLength(dataCopy);
+          uint8_t* dst = result.data.get();
+
+    while (src < end) {
+        dst[0] = src[0];
+        dst[1] = src[1];
+        dst[2] = src[2];
+        dst[3] = alpha == kCGImageAlphaLast ? src[3] : 0xFF;
+        src += bpp / bpc;
+        dst += 4;
     }
 
-    CGContextSetBlendMode(context, kCGBlendModeCopy);
-
-    CGRect rect = {{ 0, 0 }, { static_cast<CGFloat>(result.width), static_cast<CGFloat>(result.height) }};
-    CGContextDrawImage(context, rect, image);
-
-    CGContextRelease(context);
-    CGColorSpaceRelease(color_space);
+    CFRelease(dataCopy);
     CGImageRelease(image);
-    CFRelease(image_source);
+    CFRelease(imageSource);
     CFRelease(data);
 
     return result;

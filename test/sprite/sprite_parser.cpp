@@ -3,6 +3,7 @@
 
 #include <mbgl/sprite/sprite_parser.hpp>
 #include <mbgl/sprite/sprite_image.hpp>
+#include <mbgl/util/premultiply.hpp>
 #include <mbgl/util/image.hpp>
 #include <mbgl/util/io.hpp>
 
@@ -13,7 +14,7 @@ using namespace mbgl;
 TEST(Sprite, SpriteImageCreationInvalid) {
     FixtureLog log;
 
-    const PremultipliedImage image_1x = decodeImage(util::read_file("test/fixtures/annotations/emerald.png"));
+    const PremultipliedImage image_1x = util::premultiply(decodeImage(util::read_file("test/fixtures/annotations/emerald.png")));
 
     ASSERT_EQ(200u, image_1x.width);
     ASSERT_EQ(299u, image_1x.height);
@@ -34,7 +35,7 @@ TEST(Sprite, SpriteImageCreationInvalid) {
 }
 
 TEST(Sprite, SpriteImageCreation1x) {
-    const PremultipliedImage image_1x = decodeImage(util::read_file("test/fixtures/annotations/emerald.png"));
+    const PremultipliedImage image_1x = util::premultiply(decodeImage(util::read_file("test/fixtures/annotations/emerald.png")));
 
     ASSERT_EQ(200u, image_1x.width);
     ASSERT_EQ(299u, image_1x.height);
@@ -74,7 +75,7 @@ TEST(Sprite, SpriteImageCreation1x) {
 }
 
 TEST(Sprite, SpriteImageCreation2x) {
-    const PremultipliedImage image_2x = decodeImage(util::read_file("test/fixtures/annotations/emerald@2x.png"));
+    const PremultipliedImage image_2x = util::premultiply(decodeImage(util::read_file("test/fixtures/annotations/emerald@2x.png")));
 
     // "museum_icon":{"x":354,"y":374,"width":36,"height":36,"pixelRatio":2,"sdf":false}
     const auto sprite = createSpriteImage(image_2x, 354, 374, 36, 36, 2, false);
@@ -88,7 +89,7 @@ TEST(Sprite, SpriteImageCreation2x) {
 }
 
 TEST(Sprite, SpriteImageCreation1_5x) {
-    const PremultipliedImage image_2x = decodeImage(util::read_file("test/fixtures/annotations/emerald@2x.png"));
+    const PremultipliedImage image_2x = util::premultiply(decodeImage(util::read_file("test/fixtures/annotations/emerald@2x.png")));
 
     // "museum_icon":{"x":354,"y":374,"width":36,"height":36,"pixelRatio":2,"sdf":false}
     const auto sprite = createSpriteImage(image_2x, 354, 374, 36, 36, 1.5, false);

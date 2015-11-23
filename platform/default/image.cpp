@@ -62,10 +62,10 @@ std::string encodePNG(const UnassociatedImage& src) {
     return result;
 }
 
-PremultipliedImage decodePNG(const uint8_t*, size_t);
-PremultipliedImage decodeJPEG(const uint8_t*, size_t);
+UnassociatedImage decodePNG(const uint8_t*, size_t);
+UnassociatedImage decodeJPEG(const uint8_t*, size_t);
 
-PremultipliedImage decodeImage(const std::string& string) {
+UnassociatedImage decodeImage(const std::string& string) {
     const uint8_t* data = reinterpret_cast<const uint8_t*>(string.data());
     const size_t size = string.size();
 

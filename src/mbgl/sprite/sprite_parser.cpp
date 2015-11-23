@@ -4,6 +4,7 @@
 #include <mbgl/platform/log.hpp>
 
 #include <mbgl/util/image.hpp>
+#include <mbgl/util/premultiply.hpp>
 
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
@@ -108,7 +109,7 @@ SpriteParseResult parseSprite(const std::string& image, const std::string& json)
     PremultipliedImage raster;
 
     try {
-        raster = decodeImage(image);
+        raster = util::premultiply(decodeImage(image));
     } catch (...) {
         return std::string("Could not parse sprite image");
     }

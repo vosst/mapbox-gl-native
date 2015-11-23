@@ -1,6 +1,7 @@
 #include <mbgl/util/worker.hpp>
 #include <mbgl/util/work_task.hpp>
 #include <mbgl/util/work_request.hpp>
+#include <mbgl/util/premultiply.hpp>
 #include <mbgl/platform/platform.hpp>
 #include <mbgl/renderer/raster_bucket.hpp>
 #include <mbgl/map/geometry_tile.hpp>
@@ -20,7 +21,7 @@ public:
         PremultipliedImage image;
 
         try {
-            image = decodeImage(*data);
+            image = util::premultiply(decodeImage(*data));
         } catch (...) {
             callback(RasterTileParseResult("error parsing raster image"));
         }
