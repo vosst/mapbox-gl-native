@@ -156,14 +156,6 @@ std::unique_ptr<uint8_t[]> PngReader<T>::read()
     // quick hack -- only work in >=libpng 1.2.7
     png_set_add_alpha(png_ptr,0xff,PNG_FILLER_AFTER); //rgba
 
-    double gamma;
-    if (png_get_gAMA(png_ptr, info_ptr, &gamma))
-        png_set_gamma(png_ptr, 2.2, gamma);
-
-#ifdef PNG_ALPHA_PREMULTIPLIED
-    png_set_alpha_mode(png_ptr, PNG_ALPHA_PREMULTIPLIED, PNG_GAMMA_LINEAR);
-#endif
-
     if (png_get_interlace_type(png_ptr,info_ptr) == PNG_INTERLACE_ADAM7)
     {
         png_set_interlace_handling(png_ptr); // FIXME: libpng bug?
@@ -179,7 +171,6 @@ std::unique_ptr<uint8_t[]> PngReader<T>::read()
         rows[row] = (png_bytep)image.get() + row * width_ * 4 ;
     png_read_image(png_ptr, rows.get());
 
-#ifndef PNG_ALPHA_PREMULTIPLIED
     // Manually premultiply the image if libpng didn't do it for us.
     for (unsigned row = 0; row < height_; ++row) {
         for (unsigned x = 0; x < width_; x++) {
@@ -190,7 +181,6 @@ std::unique_ptr<uint8_t[]> PngReader<T>::read()
             ptr[2] *= a;
         }
     }
-#endif
 
     png_read_end(png_ptr,0);
 
