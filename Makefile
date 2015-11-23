@@ -120,10 +120,12 @@ ifeq ($(BUILD), osx)
 	if [ $$CUSTOM_DD ]; then \
 		echo clearing files in $$CUSTOM_DD older than one day; \
 		find $$CUSTOM_DD/mapboxgl-app-* -mtime +1 | xargs rm -rf; \
+		find $$CUSTOM_DD/osxapp-* -mtime +1 | xargs rm -rf; \
 	fi; \
 	if [ -d ~/Library/Developer/Xcode/DerivedData/ ] && [ ! $$CUSTOM_DD ]; then \
-		echo 'clearing files in ~/Library/Developer/Xcode/DerivedData/mapboxgl-app-* older than one day'; \
+		echo 'clearing files in ~/Library/Developer/Xcode/DerivedData/{mapboxgl-app,osxapp}-* older than one day'; \
 		find ~/Library/Developer/Xcode/DerivedData/mapboxgl-app-* -mtime +1 | xargs rm -rf; \
+		find ~/Library/Developer/Xcode/DerivedData/osxapp-* -mtime +1 | xargs rm -rf; \
 	fi
 endif
 
