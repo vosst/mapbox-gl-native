@@ -48,7 +48,11 @@ static UIColor *const kTintColor = [UIColor colorWithRed:0.120 green:0.550 blue:
 {
     [super viewDidLoad];
 
-    self.mapView = [[MGLMapView alloc] initWithFrame:self.view.bounds];
+    NSString *offlineMapPath = [[NSBundle mainBundle] pathForResource:@"cache" ofType:@"mbtiles"];
+
+    self.mapView = [[MGLMapView alloc] initWithFrame:self.view.bounds
+                                            styleURL:[MGLStyle streetsStyleURL]
+                                      offlineMapPath:offlineMapPath];
     self.mapView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     self.mapView.delegate = self;
     [self.view addSubview:self.mapView];

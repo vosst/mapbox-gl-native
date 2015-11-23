@@ -28,7 +28,7 @@
 
 namespace mbgl {
 
-MapContext::MapContext(View& view_, FileSource& fileSource, MapData& data_)
+MapContext::MapContext(View& view_, FileSource& fileSource, MapData& data_, const std::string& offlineMapPath)
     : view(view_),
       data(data_),
       asyncUpdate(std::make_unique<uv::async>(util::RunLoop::getLoop(), [this] { update(); })),
@@ -36,8 +36,10 @@ MapContext::MapContext(View& view_, FileSource& fileSource, MapData& data_)
       texturePool(std::make_unique<TexturePool>()) {
     assert(util::ThreadContext::currentlyOn(util::ThreadType::Map));
 
-    frontlineFileSource = new FrontlineFileSource("/tmp/test.mbtiles");
-    util::ThreadContext::addFileSource(frontlineFileSource);
+    if (offlineMapPath.length()) {
+        frontlineFileSource = new FrontlineFileSource(offlineMapPath);
+        util::ThreadContext::addFileSource(frontlineFileSource);
+    }
     util::ThreadContext::addFileSource(&fileSource);
     util::ThreadContext::setGLObjectStore(&glObjectStore);
 

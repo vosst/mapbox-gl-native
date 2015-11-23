@@ -36,7 +36,7 @@ struct FrameData {
 
 class MapContext : public Style::Observer {
 public:
-    MapContext(View&, FileSource&, MapData&);
+    MapContext(View&, FileSource&, MapData&, const std::string& offlineMapPath = "");
     ~MapContext();
 
     void pause();
