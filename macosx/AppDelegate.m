@@ -34,7 +34,7 @@
         } else {
             // Try to retrieve from preferences, maybe we've stored them there previously and can reuse
             // the token.
-            accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:@"MGLMapboxAccessToken"];
+            accessToken = [[NSUserDefaults standardUserDefaults] stringForKey:@"MGLMapboxAccessToken"];
         }
         if (!accessToken) {
             NSAlert *alert = [[NSAlert alloc] init];
@@ -105,6 +105,29 @@
     }
     self.mapView.styleURL = styleURL;
     [self.window.toolbar validateVisibleItems];
+}
+
+- (IBAction)chooseCustomStyle:(id)sender {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Apply custom style";
+    alert.informativeText = @"Enter the URL to a JSON file that conforms to the Mapbox GL style specification:";
+    NSTextField *textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    [textField sizeToFit];
+    NSRect textFieldFrame = textField.frame;
+    textFieldFrame.size.width = 300;
+    textField.frame = textFieldFrame;
+    NSString *savedURLString = [[NSUserDefaults standardUserDefaults] stringForKey:@"MBXCustomStyleURL"];
+    if (savedURLString) {
+        textField.stringValue = savedURLString;
+    }
+    alert.accessoryView = textField;
+    [alert addButtonWithTitle:@"Apply"];
+    [alert addButtonWithTitle:@"Cancel"];
+    if ([alert runModal] == NSAlertFirstButtonReturn) {
+        [[NSUserDefaults standardUserDefaults] setObject:textField.stringValue forKey:@"MBXCustomStyleURL"];
+        self.mapView.styleURL = [NSURL URLWithString:textField.stringValue];
+        [self.window.toolbar validateVisibleItems];
+    }
 }
 
 - (IBAction)zoomIn:(id)sender {
@@ -193,6 +216,10 @@
         menuItem.state = state;
         return YES;
     }
+    if (menuItem.action == @selector(chooseCustomStyle:)) {
+        menuItem.state = self.indexOfStyleInToolbarItem == NSNotFound;
+        return YES;
+    }
     if (menuItem.action == @selector(zoomIn:)) {
         return self.mapView.zoomLevel < self.mapView.maximumZoomLevel;
     }
@@ -225,7 +252,23 @@
     return NO;
 }
 
+- (NSUInteger)indexOfStyleInToolbarItem {
+    NSArray *styleURLs = @[
+        [MGLStyle streetsStyleURL],
+        [MGLStyle emeraldStyleURL],
+        [MGLStyle lightStyleURL],
+        [MGLStyle darkStyleURL],
+        [MGLStyle satelliteStyleURL],
+        [MGLStyle hybridStyleURL],
+    ];
+    return [styleURLs indexOfObject:self.mapView.styleURL];
+}
+
 - (BOOL)validateToolbarItem:(NSToolbarItem *)toolbarItem {
+    if (!self.mapView) {
+        return NO;
+    }
+    
     if (toolbarItem.action == @selector(showShareMenu:)) {
         [(NSButton *)toolbarItem.view sendActionOn:NSLeftMouseDownMask];
         NSURL *styleURL = self.mapView.styleURL;
@@ -234,16 +277,13 @@
                 && [MGLAccountManager accessToken]);
     }
     if (toolbarItem.action == @selector(setStyle:)) {
-        NSArray *styleURLs = @[
-            [MGLStyle streetsStyleURL],
-            [MGLStyle emeraldStyleURL],
-            [MGLStyle lightStyleURL],
-            [MGLStyle darkStyleURL],
-            [MGLStyle satelliteStyleURL],
-            [MGLStyle hybridStyleURL],
-        ];
-        [(NSPopUpButton *)toolbarItem.view selectItemAtIndex:
-         [styleURLs indexOfObject:self.mapView.styleURL]];
+        NSPopUpButton *popUpButton = (NSPopUpButton *)toolbarItem.view;
+        NSUInteger index = self.indexOfStyleInToolbarItem;
+        if (index == NSNotFound) {
+            [popUpButton addItemWithTitle:@"Custom"];
+            index = [popUpButton numberOfItems] - 1;
+        }
+        [popUpButton selectItemAtIndex:index];
     }
     return NO;
 }

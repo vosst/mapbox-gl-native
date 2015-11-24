@@ -385,6 +385,12 @@
                                     <action selector="setStyle:" target="-1" id="oL4-AC-waq"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Custom Style…" id="L0h-86-2cU">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="chooseCustomStyle:" target="-1" id="QJF-fM-Ty3"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="BMF-ml-0Bd"/>
                             <menuItem title="Zoom In" keyEquivalent="+" id="W82-WO-xvB">
                                 <connections>
@@ -549,7 +555,7 @@
             </toolbar>
         </window>
         <window title="Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="Preferences" animationBehavior="default" id="UWc-yQ-qda">
-            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="109" y="131" width="350" height="62"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1280" height="777"/>
@@ -604,6 +610,9 @@
                     <constraint firstItem="7sb-sf-oJU" firstAttribute="centerY" secondItem="c3S-LC-PoX" secondAttribute="centerY" id="zej-gw-fC0"/>
                 </constraints>
             </view>
+            <connections>
+                <outlet property="initialFirstResponder" destination="7sb-sf-oJU" id="UZe-di-dnA"/>
+            </connections>
             <point key="canvasLocation" x="754" y="210"/>
         </window>
         <userDefaultsController representsSharedInstance="YES" id="45S-yT-WUN"/>
