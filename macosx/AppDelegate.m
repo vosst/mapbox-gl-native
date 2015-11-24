@@ -73,9 +73,14 @@
 }
 
 - (IBAction)setStyle:(id)sender {
-    NSMenuItem *menuItem = sender;
+    NSInteger tag;
+    if ([sender isKindOfClass:[NSMenuItem class]]) {
+        tag = [sender tag];
+    } else if ([sender isKindOfClass:[NSPopUpButton class]]) {
+        tag = [sender selectedTag];
+    }
     NSURL *styleURL;
-    switch (menuItem.tag) {
+    switch (tag) {
         case 1:
             styleURL = [MGLStyle streetsStyleURL];
             break;
@@ -95,10 +100,11 @@
             styleURL = [MGLStyle hybridStyleURL];
             break;
         default:
-            NSAssert(NO, @"Cannot set style from control with tag %li", (long)menuItem.tag);
+            NSAssert(NO, @"Cannot set style from control with tag %li", (long)tag);
             break;
     }
     self.mapView.styleURL = styleURL;
+    [self.window.toolbar validateVisibleItems];
 }
 
 - (IBAction)zoomIn:(id)sender {
@@ -227,6 +233,18 @@
                 && [styleURL.pathComponents.firstObject isEqualToString:@"styles"]
                 && [MGLAccountManager accessToken]);
     }
+    if (toolbarItem.action == @selector(setStyle:)) {
+        NSArray *styleURLs = @[
+            [MGLStyle streetsStyleURL],
+            [MGLStyle emeraldStyleURL],
+            [MGLStyle lightStyleURL],
+            [MGLStyle darkStyleURL],
+            [MGLStyle satelliteStyleURL],
+            [MGLStyle hybridStyleURL],
+        ];
+        [(NSPopUpButton *)toolbarItem.view selectItemAtIndex:
+         [styleURLs indexOfObject:self.mapView.styleURL]];
+    }
     return NO;
 }
 
@@ -253,11 +271,11 @@
 
 @end
 
-@interface ShareToolbarItem : NSToolbarItem
+@interface ValidatedToolbarItem : NSToolbarItem
 
 @end
 
-@implementation ShareToolbarItem
+@implementation ValidatedToolbarItem
 
 - (void)validate {
     [(AppDelegate *)self.toolbar.delegate validateToolbarItem:self];

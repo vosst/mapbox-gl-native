@@ -489,10 +489,10 @@
                 <allowedToolbarItems>
                     <toolbarItem implicitItemIdentifier="NSToolbarSpaceItem" id="zzK-Oz-JV8"/>
                     <toolbarItem implicitItemIdentifier="NSToolbarFlexibleSpaceItem" id="SMs-8a-x2h"/>
-                    <toolbarItem implicitItemIdentifier="2CB58C0A-7B95-4233-8DD3-F94BFE7D3061" label="Share" paletteLabel="Share" image="NSShareTemplate" id="HtT-hs-jWY" customClass="ShareToolbarItem">
+                    <toolbarItem implicitItemIdentifier="2CB58C0A-7B95-4233-8DD3-F94BFE7D3061" label="Share" paletteLabel="Share" image="NSShareTemplate" id="HtT-hs-jWY" customClass="ValidatedToolbarItem">
                         <nil key="toolTip"/>
-                        <size key="minSize" width="48" height="32"/>
-                        <size key="maxSize" width="48" height="32"/>
+                        <size key="minSize" width="40" height="32"/>
+                        <size key="maxSize" width="40" height="32"/>
                         <button key="view" verticalHuggingPriority="750" id="l0U-ql-5hn">
                             <rect key="frame" x="0.0" y="14" width="48" height="32"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -505,10 +505,43 @@
                             <action selector="showShareMenu:" target="-1" id="vDU-9Y-DkS"/>
                         </connections>
                     </toolbarItem>
+                    <toolbarItem implicitItemIdentifier="BA3542AF-D63A-4893-9CC7-8F67EF2E82B0" label="Style" paletteLabel="Style" id="ge5-0H-wyr" customClass="ValidatedToolbarItem">
+                        <nil key="toolTip"/>
+                        <size key="minSize" width="100" height="26"/>
+                        <size key="maxSize" width="100" height="26"/>
+                        <popUpButton key="view" verticalHuggingPriority="750" id="5Cd-Lw-cWm">
+                            <rect key="frame" x="0.0" y="14" width="100" height="26"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <popUpButtonCell key="cell" type="roundTextured" title="Streets" bezelStyle="texturedRounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="border" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="ZnV-nK-Bri" id="esr-2z-V4Y">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="menu"/>
+                                <menu key="menu" id="uxq-U6-EQW">
+                                    <items>
+                                        <menuItem title="Streets" state="on" tag="1" id="ZnV-nK-Bri"/>
+                                        <menuItem title="Emerald" tag="2" id="LLa-jX-Dox"/>
+                                        <menuItem title="Light" tag="3" id="jDf-NE-hMn"/>
+                                        <menuItem title="Dark" tag="4" id="etJ-y7-M5R">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
+                                        <menuItem title="Satellite" tag="5" id="xYa-J8-bLe">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
+                                        <menuItem title="Hybrid" tag="6" id="1Uq-Nl-FSZ">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
+                                    </items>
+                                </menu>
+                            </popUpButtonCell>
+                        </popUpButton>
+                        <connections>
+                            <action selector="setStyle:" target="-1" id="qb2-E8-7pE"/>
+                        </connections>
+                    </toolbarItem>
                 </allowedToolbarItems>
                 <defaultToolbarItems>
                     <toolbarItem reference="HtT-hs-jWY"/>
                     <toolbarItem reference="SMs-8a-x2h"/>
+                    <toolbarItem reference="ge5-0H-wyr"/>
                 </defaultToolbarItems>
                 <connections>
                     <outlet property="delegate" destination="Voe-Tx-rLC" id="ciT-Nf-Dtm"/>
