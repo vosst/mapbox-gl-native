@@ -12,7 +12,7 @@
 #import <mbgl/osx/MGLMapView.h>
 #import <mbgl/osx/MGLStyle.h>
 
-@interface AppDelegate ()
+@interface AppDelegate () <NSSharingServicePickerDelegate>
 
 @property (weak) IBOutlet NSWindow *window;
 @property (strong) IBOutlet MGLMapView *mapView;
@@ -55,6 +55,21 @@
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
+}
+
+- (IBAction)showShareMenu:(id)sender {
+    NSSharingServicePicker *picker = [[NSSharingServicePicker alloc] initWithItems:@[self.shareURL]];
+    picker.delegate = self;
+    [picker showRelativeToRect:[sender bounds] ofView:sender preferredEdge:NSMinYEdge];
+}
+
+- (NSURL *)shareURL {
+    NSArray *components = self.mapView.styleURL.pathComponents;
+    CLLocationCoordinate2D centerCoordinate = self.mapView.centerCoordinate;
+    return [NSURL URLWithString:
+            [NSString stringWithFormat:@"https://api.mapbox.com/styles/v1/%@/%@.html?access_token=%@#%.2f/%.5f/%.5f/%.f",
+             components[1], components[2], [MGLAccountManager accessToken],
+             self.mapView.zoomLevel, centerCoordinate.latitude, centerCoordinate.longitude, self.mapView.direction]];
 }
 
 - (IBAction)setStyle:(id)sender {
@@ -202,6 +217,50 @@
         return YES;
     }
     return NO;
+}
+
+- (BOOL)validateToolbarItem:(NSToolbarItem *)toolbarItem {
+    if (toolbarItem.action == @selector(showShareMenu:)) {
+        [(NSButton *)toolbarItem.view sendActionOn:NSLeftMouseDownMask];
+        NSURL *styleURL = self.mapView.styleURL;
+        return ([styleURL.scheme isEqualToString:@"mapbox"]
+                && [styleURL.pathComponents.firstObject isEqualToString:@"styles"]
+                && [MGLAccountManager accessToken]);
+    }
+    return NO;
+}
+
+#pragma mark NSSharingServicePickerDelegate methods
+
+- (NS_ARRAY_OF(NSSharingService *) *)sharingServicePicker:(NSSharingServicePicker *)sharingServicePicker sharingServicesForItems:(NSArray *)items proposedSharingServices:(NS_ARRAY_OF(NSSharingService *) *)proposedServices {
+    NSURL *shareURL = self.shareURL;
+    NSURL *browserURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:shareURL];
+    NSImage *browserIcon = [[NSWorkspace sharedWorkspace] iconForFile:browserURL.path];
+    NSString *browserName = [[NSFileManager defaultManager] displayNameAtPath:browserURL.path];
+    NSString *browserServiceName = [NSString stringWithFormat:@"Open in %@", browserName];
+    
+    NSSharingService *browserService = [[NSSharingService alloc] initWithTitle:browserServiceName
+                                                                         image:browserIcon
+                                                                alternateImage:nil
+                                                                       handler:^{
+        [[NSWorkspace sharedWorkspace] openURL:self.shareURL];
+    }];
+    
+    NSMutableArray *sharingServices = [proposedServices mutableCopy];
+    [sharingServices insertObject:browserService atIndex:0];
+    return sharingServices;
+}
+
+@end
+
+@interface ShareToolbarItem : NSToolbarItem
+
+@end
+
+@implementation ShareToolbarItem
+
+- (void)validate {
+    [(AppDelegate *)self.toolbar.delegate validateToolbarItem:self];
 }
 
 @end
