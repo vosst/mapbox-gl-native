@@ -35,7 +35,8 @@ public:
 
     void setSprite(const std::string& name, std::shared_ptr<const SpriteImage>);
     double getTopOffsetPixelsForAnnotationSymbol(const std::string& name);
-    SpriteAtlas& getSpriteAtlas() { return spriteAtlas; }
+    SpriteAtlas& getSpriteAtlas() { return *spriteAtlas; }
+    void clear();
 
     void updateStyle(Style&);
 
@@ -55,8 +56,8 @@ private:
     std::vector<std::string> obsoleteShapeAnnotationLayers;
     std::set<AnnotationTileMonitor*> monitors;
 
-    SpriteStore spriteStore;
-    SpriteAtlas spriteAtlas;
+    std::unique_ptr<SpriteStore> spriteStore;
+    std::unique_ptr<SpriteAtlas> spriteAtlas;
 };
 
 }

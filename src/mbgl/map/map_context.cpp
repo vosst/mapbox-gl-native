@@ -59,6 +59,7 @@ void MapContext::cleanup() {
     style.reset();
     painter.reset();
     texturePool.reset();
+    data.getAnnotationManager()->clear();
 
     glObjectStore.performCleanup();
 
