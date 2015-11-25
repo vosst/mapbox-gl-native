@@ -2,6 +2,7 @@
 #define MBGL_MAP_TILE_DATA
 
 #include <mbgl/util/noncopyable.hpp>
+#include <mbgl/util/chrono.hpp>
 #include <mbgl/map/tile_id.hpp>
 #include <mbgl/renderer/bucket.hpp>
 #include <mbgl/text/placement_config.hpp>
@@ -94,6 +95,8 @@ public:
     void dumpDebugLogs() const;
 
     const TileID id;
+    time_t modified = 0;
+    time_t expires = 0;
 
     // Contains the tile ID string for painting debug information.
     std::unique_ptr<DebugBucket> debugBucket;

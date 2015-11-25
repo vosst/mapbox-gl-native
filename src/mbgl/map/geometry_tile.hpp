@@ -52,6 +52,10 @@ class GeometryTileMonitor : private util::noncopyable {
 public:
     virtual ~GeometryTileMonitor() = default;
 
+    using Callback = std::function<void (std::exception_ptr,
+                                         std::unique_ptr<GeometryTile>,
+                                         time_t modified,
+                                         time_t expires)>;
     /*
      * Monitor the tile held by this object for changes. When the tile is loaded for the first time,
      * or updates, the callback is executed. If an error occurs, the first parameter will be set.
@@ -60,7 +64,7 @@ public:
      *
      * To cease monitoring, release the returned Request.
      */
-    virtual std::unique_ptr<FileRequest> monitorTile(std::function<void (std::exception_ptr, std::unique_ptr<GeometryTile>)>) = 0;
+    virtual std::unique_ptr<FileRequest> monitorTile(const Callback&) = 0;
 };
 
 class GeometryTileFeatureExtractor {
