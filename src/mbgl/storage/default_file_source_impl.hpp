@@ -57,7 +57,7 @@ public:
     // Returns the seconds we have to wait until we need to redo this request. A value of 0
     // means that we need to redo it immediately, and a negative value means that we're not setting
     // a timeout at all.
-    int64_t getRetryTimeout() const;
+    time_t getRetryTimeout() const;
 
     // Checks the currently stored response and replaces it with an idential one, except with the
     // stale flag set, if the response is expired.

@@ -25,8 +25,8 @@ public:
     // The actual data of the response. This is guaranteed to never be empty.
     std::shared_ptr<const std::string> data;
 
-    int64_t modified = 0;
-    int64_t expires = 0;
+    time_t modified = 0;
+    time_t expires = 0;
     std::string etag;
 };
 

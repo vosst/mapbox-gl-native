@@ -118,9 +118,9 @@ void SQLiteCache::Impl::get(const Resource &resource, Callback callback) {
                 // Status codes > 1 indicate an error
                 response->error = std::make_unique<Response::Error>(Response::Error::Reason(status));
             }
-            response->modified = getStmt->get<int64_t>(1);
+            response->modified = getStmt->get<time_t>(1);
             response->etag = getStmt->get<std::string>(2);
-            response->expires = getStmt->get<int64_t>(3);
+            response->expires = getStmt->get<time_t>(3);
             response->data = std::make_shared<std::string>(std::move(getStmt->get<std::string>(4)));
             if (getStmt->get<int>(5)) { // == compressed
                 response->data = std::make_shared<std::string>(std::move(util::decompress(*response->data)));
@@ -208,7 +208,7 @@ void SQLiteCache::Impl::put(const Resource& resource, std::shared_ptr<const Resp
     }
 }
 
-void SQLiteCache::Impl::refresh(const Resource& resource, int64_t expires) {
+void SQLiteCache::Impl::refresh(const Resource& resource, time_t expires) {
     try {
         if (!db) {
             createDatabase();
@@ -226,7 +226,7 @@ void SQLiteCache::Impl::refresh(const Resource& resource, int64_t expires) {
         }
 
         const auto canonicalURL = util::mapbox::canonicalURL(resource.url);
-        refreshStmt->bind(1, int64_t(expires));
+        refreshStmt->bind(1, expires);
         refreshStmt->bind(2, canonicalURL.c_str());
         refreshStmt->run();
     } catch (mapbox::sqlite::Exception& ex) {

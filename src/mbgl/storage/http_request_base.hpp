@@ -16,7 +16,7 @@ public:
     virtual void cancel() override { cancelled = true; };
 
 protected:
-    static int64_t parseCacheControl(const char *value);
+    static time_t parseCacheControl(const char *value);
 
     bool cancelled;
 };

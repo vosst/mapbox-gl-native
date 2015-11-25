@@ -5,14 +5,11 @@
 
 namespace mbgl {
 
-int64_t HTTPRequestBase::parseCacheControl(const char *value) {
+time_t HTTPRequestBase::parseCacheControl(const char *value) {
     if (value) {
         const auto cacheControl = http::CacheControl::parse(value);
-
         if (cacheControl.maxAge) {
-            return std::chrono::duration_cast<std::chrono::seconds>(
-                       std::chrono::system_clock::now().time_since_epoch()).count() +
-                   *cacheControl.maxAge;
+            return SystemClock::to_time_t(SystemClock::now()) + *cacheControl.maxAge;
         }
     }
 

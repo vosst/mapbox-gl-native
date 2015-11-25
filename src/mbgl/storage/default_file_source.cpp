@@ -298,14 +298,14 @@ const std::shared_ptr<const Response>& DefaultFileRequestImpl::getResponse() con
     return response;
 }
 
-int64_t DefaultFileRequestImpl::getRetryTimeout() const {
+time_t DefaultFileRequestImpl::getRetryTimeout() const {
     if (!response) {
         // If we don't have a response, we should retry immediately.
         return 0;
     }
 
     // A value < 0 means that we should not retry.
-    int64_t timeout = -1;
+    time_t timeout = -1;
 
     if (response->error) {
         assert(failedRequests > 0);
@@ -331,13 +331,10 @@ int64_t DefaultFileRequestImpl::getRetryTimeout() const {
 
     // Check to see if this response expires earlier than a potential error retry.
     if (response->expires > 0) {
-        const int64_t expires =
-            response->expires -
-            std::chrono::duration_cast<std::chrono::seconds>(SystemClock::now().time_since_epoch())
-                .count();
+        const time_t secsToExpire = response->expires - SystemClock::to_time_t(SystemClock::now());
         // Only update the timeout if we don't have one yet, and only if the new timeout is shorter
         // than the previous one.
-        timeout = timeout < 0 ? expires : std::min(timeout, std::max<int64_t>(0, expires));
+        timeout = timeout < 0 ? secsToExpire: std::min(timeout, std::max<time_t>(0, secsToExpire));
     }
 
     return timeout;

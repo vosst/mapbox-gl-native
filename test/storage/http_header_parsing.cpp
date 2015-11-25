@@ -42,8 +42,7 @@ TEST_F(Storage, HTTPCacheControlParsing) {
     DefaultFileSource fs(nullptr);
     util::RunLoop loop(uv_default_loop());
 
-    int64_t now = std::chrono::duration_cast<std::chrono::seconds>(
-                       SystemClock::now().time_since_epoch()).count();
+    int64_t now = SystemClock::to_time_t(SystemClock::now());
 
     std::unique_ptr<FileRequest> req2 = fs.request({ Resource::Unknown, "http://127.0.0.1:3000/test?cachecontrol=max-age=120" },
                [&](Response res) {
